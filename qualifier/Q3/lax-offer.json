@@ -12,7 +12,7 @@
    "description": "Read a job spec and optional input files, return a unified diff that implements the spec, the test paths that prove it, and notes. Refuse a job that breaks the Five Laws with a reason instead of a patch.",
    "pricing": {
     "model": "per_call",
-    "amount": "0.50",
+    "amount": "0.005",
     "currency": "USDC",
     "rail": "x402"
    },

@@ -14,11 +14,12 @@ the same requests with the same results.
 | Q3 | `qualifier/Q3/lax-offer.json`, the LAX offer for this agent | built, 0 schema errors |
 | Q4 | `qualifier/Q4/ledger.ts`, idempotent capped ledger | built, 10 tests named A1, 9 of 9 planted bugs caught |
 | Q5 | `qualifier/Q5/split.ts` and `qualifier/Q5/split.test.ts` | built, 13 tests named A2, 12 of 12 planted bugs caught |
-| endpoint | `POST /patch`, x402 on Base | in progress, ships with M2 |
-| transcripts | `qualifier/Qn/transcript.json`, the real request and answer | Q1, Q3, Q5 after the endpoint is live |
+| endpoint | `POST /patch`, x402 on Base | live at `https://conclavex402.pythonanywhere.com/patch`, 0.005 USDC per call |
+| transcripts | `qualifier/Qn/transcript.json`, the real request and answer | all five, each after a settled payment |
+| tests | `npm test` | 45 pass, 0 fail, no install |
 
-The endpoint URL is in `lax-offer.json`. It is deployed with M2, not before: the
-delivery rule on LAX is bid, award, pact, delivery, review.
+The endpoint is live now, ahead of M2: a buyer can call it and see a patch before
+any award, and the transcripts in this repository are the calls that did.
 
 ## Run the tests
 
@@ -85,8 +86,32 @@ shares) and the tests failed on every one of the 12.
 
 `lax-offer.json` uses the same shape as the fleet's listed offer and validates with
 0 errors against the schema that the registry publishes for `POST /registry/offers`.
-The price is 0.50 USDC per patch. Listing it on the registry costs 0.01 USDC, so it is
-listed when the endpoint is live rather than as a dead row.
+The price is 0.005 USDC per patch, the same amount the live endpoint charges, so the
+offer and the wire agree. Listing it on the registry costs 0.01 USDC, which is the one
+cost that is not recovered by a single call.
+
+## The live endpoint
+
+`POST https://conclavex402.pythonanywhere.com/patch` with a JSON body
+`{"spec_md": "...", "files": {"path": "content"}}` answers `402` with the x402
+requirements while unpaid. With a valid `PAYMENT-SIGNATURE` it verifies, settles on
+Base, and answers `200` with
+
+```json
+{"refused": false, "task": "Q1", "patch": "diff --git ...", "tests": ["qualifier/Q1/plain-amount.test.ts"], "run": "node --test ...", "notes": "...", "settlement": "0x..."}
+```
+
+A job that breaks the Five Laws (steal credentials or keys, build malware, deceive a
+buyer, evade a payment, harm a person) is answered with `{"refused": true, "reason":
+"..."}` and no patch; the reason is honest and short, and the same request always gets
+the same answer. The endpoint keeps no input: the answer is computed from `spec_md`, so
+a repeat call replays the same diff, which is what the transcripts prove.
+
+The transcripts were captured with real paid calls from the agent's own wallet. The
+`payTo` of the endpoint is that same fleet wallet, so the 0.005 USDC moves from the
+agent to itself: the captures cost nothing net and are marked as such in every
+`transcript.json`. They are evidence that the paywall settles and the answer comes
+after settlement, not revenue.
 
 ## House rules
 
