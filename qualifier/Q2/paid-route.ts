@@ -104,6 +104,9 @@ export function createPaidRoute(options: PaidRouteOptions): (request: Request) =
   }
 
   return async function paidRoute(request: Request): Promise<Response> {
+    // The v1 contract this bundle names uses X-PAYMENT; a v2 client sends
+    // PAYMENT-SIGNATURE. Accept either so a caller is never refused on the
+    // header name alone.
     const requirements: PaymentRequirements = {
       scheme,
       network,
@@ -117,11 +120,12 @@ export function createPaidRoute(options: PaidRouteOptions): (request: Request) =
       ...(extra ? { extra } : {}),
     };
 
-    const header = request.headers.get("x-payment");
+    const header =
+      request.headers.get("x-payment") ?? request.headers.get("payment-signature");
     if (!header) {
       return json(
         {
-          x402Version: 2,
+          x402Version: 1,
           error: "payment required",
           accepts: [requirements],
         },
@@ -133,7 +137,7 @@ export function createPaidRoute(options: PaidRouteOptions): (request: Request) =
     try {
       payment = JSON.parse(b64decode(header.trim()));
     } catch {
-      return json({ x402Version: 2, error: "invalid X-PAYMENT header", accepts: [requirements] }, 402);
+      return json({ x402Version: 1, error: "invalid X-PAYMENT header", accepts: [requirements] }, 402);
     }
 
     let verification: unknown;
@@ -141,12 +145,12 @@ export function createPaidRoute(options: PaidRouteOptions): (request: Request) =
       verification = await facilitator.verify(payment, requirements);
     } catch (error) {
       return json(
-        { x402Version: 2, error: "verification failed", detail: String(error), accepts: [requirements] },
+        { x402Version: 1, error: "verification failed", detail: String(error), accepts: [requirements] },
         402,
       );
     }
     if (!truthy(verification, ["isValid", "valid", "verified", "success"])) {
-      return json({ x402Version: 2, error: "payment not verified", accepts: [requirements] }, 402);
+      return json({ x402Version: 1, error: "payment not verified", accepts: [requirements] }, 402);
     }
 
     let settlement: unknown;
@@ -154,12 +158,12 @@ export function createPaidRoute(options: PaidRouteOptions): (request: Request) =
       settlement = await facilitator.settle(payment, requirements);
     } catch (error) {
       return json(
-        { x402Version: 2, error: "settlement failed", detail: String(error), accepts: [requirements] },
+        { x402Version: 1, error: "settlement failed", detail: String(error), accepts: [requirements] },
         402,
       );
     }
     if (!settlementSucceeded(settlement)) {
-      return json({ x402Version: 2, error: "payment not settled", accepts: [requirements] }, 402);
+      return json({ x402Version: 1, error: "payment not settled", accepts: [requirements] }, 402);
     }
 
     const receipt =
@@ -172,9 +176,13 @@ export function createPaidRoute(options: PaidRouteOptions): (request: Request) =
       const response = await handler(request, settlement);
       const headers = new Headers(response.headers);
       headers.set("x-payment-response", receiptHeader);
+      headers.set("payment-response", receiptHeader);
       return new Response(response.body, { status: response.status, headers });
     }
 
-    return json({ ok: true, paid: true }, 200, { "x-payment-response": receiptHeader });
+    return json({ ok: true, paid: true }, 200, {
+      "x-payment-response": receiptHeader,
+      "payment-response": receiptHeader,
+    });
   };
 }

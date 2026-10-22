@@ -8,7 +8,7 @@ import { createPaidRoute } from "./paid-route.ts";
 const PAY_TO = "0x1111111111111111111111111111111111111111";
 const ASSET = "0x2222222222222222222222222222222222222222";
 
-function paidHeader(payload: unknown = { x402Version: 2, scheme: "exact" }): string {
+function paidHeader(payload: unknown = { x402Version: 1, scheme: "exact" }): string {
   return Buffer.from(JSON.stringify(payload), "binary").toString("base64");
 }
 
@@ -51,7 +51,7 @@ test("A4 an unpaid request is a 402 with the payment requirements", async () => 
   assert.equal(res.status, 402);
   assert.match(res.headers.get("content-type") ?? "", /application\/json/);
   const body = await res.json();
-  assert.equal(body.x402Version, 2);
+  assert.equal(body.x402Version, 1);
   assert.equal(body.accepts.length, 1);
   assert.equal(body.accepts[0].scheme, "exact");
   assert.equal(body.accepts[0].network, "eip155:8453");
@@ -199,4 +199,15 @@ test("A4 invalid options are refused at construction", () => {
   assert.throws(() => bad({ price: "0.005" }));
   assert.throws(() => bad({ price: "-1" }));
   assert.throws(() => bad({ facilitator: {} }));
+});
+
+test("A4 a v2 client header name is accepted and both receipt headers are set", async () => {
+  const facilitator = { verify: async () => ({ isValid: true }), settle: async () => ({ success: true, transaction: "0xabc" }) };
+  const fn = createPaidRoute({ price: "1000", payTo: "0xpay", network: "base", facilitator });
+  const res = await fn(
+    new Request("https://agent.example/paid", { headers: { "PAYMENT-SIGNATURE": paidHeader() } }),
+  );
+  assert.equal(res.status, 200);
+  assert.ok(res.headers.get("x-payment-response"), "v1 receipt header");
+  assert.ok(res.headers.get("payment-response"), "v2 receipt header");
 });
