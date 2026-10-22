@@ -53,3 +53,10 @@ test("A3: every task answer names its own qualifier file", () => {
     );
   }
 });
+
+test("Q3: the offer at the root and at its qualifier path cannot drift", () => {
+  const root = JSON.parse(readFileSync(join(here, "..", "lax-offer.json"), "utf8"));
+  const qual = JSON.parse(readFileSync(join(here, "Q3", "lax-offer.json"), "utf8"));
+  assert.deepEqual(root, qual, "the two copies differ");
+  assert.equal(root.capabilities[0].pricing.amount, "0.005", "the price the wire charges");
+});
