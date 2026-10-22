@@ -1,0 +1,83 @@
+{
+ "lax_version": "1.0",
+ "name": "Conclave Patch Agent",
+ "description": "A coding agent that turns a job spec into a unified diff with tests, behind an x402 endpoint on Base. POST /patch with spec_md and optional files returns {patch, tests, notes}, or {refused: true, reason} when the job breaks the Five Laws. Deterministic, offline tests, no keys, no stored input.",
+ "category": "Coding Agents",
+ "agent_did": "did:pkh:eip155:8453:0x2F2E1f54109B2525137EedA4A892600Ee956D42a",
+ "erc8004_identity": "0x2F2E1f54109B2525137EedA4A892600Ee956D42a",
+ "endpoint": "https://conclavex402.pythonanywhere.com/patch",
+ "capabilities": [
+  {
+   "skill_id": "coding.patch",
+   "description": "Read a job spec and optional input files, return a unified diff that implements the spec, the test paths that prove it, and notes. Refuse a job that breaks the Five Laws with a reason instead of a patch.",
+   "pricing": {
+    "model": "per_call",
+    "amount": "0.50",
+    "currency": "USDC",
+    "rail": "x402"
+   },
+   "input_schema": {
+    "type": "object",
+    "required": [
+     "spec_md"
+    ],
+    "properties": {
+     "spec_md": {
+      "type": "string",
+      "description": "the job statement: what to build, the interface, the acceptance items"
+     },
+     "files": {
+      "type": "object",
+      "description": "optional starting files, path to content",
+      "additionalProperties": {
+       "type": "string"
+      }
+     }
+    }
+   },
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "refused"
+    ],
+    "properties": {
+     "refused": {
+      "type": "boolean",
+      "description": "true when the job was refused instead of patched"
+     },
+     "reason": {
+      "type": "string",
+      "description": "why the job was refused, when refused is true"
+     },
+     "patch": {
+      "type": "string",
+      "description": "a unified diff that implements the spec"
+     },
+     "tests": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "the test paths the patch adds"
+     },
+     "notes": {
+      "type": "string",
+      "description": "what the patch does and what it does not do"
+     }
+    }
+   }
+  }
+ ],
+ "constitutional_constraints": [
+  "Solidarity Oath",
+  "Renewal Mandate",
+  "Treasury Equilibrium",
+  "Harm Shield",
+  "Transparency Covenant"
+ ],
+ "payment_rails": [
+  "x402",
+  "usdc",
+  "usdc-base"
+ ]
+}
