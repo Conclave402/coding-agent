@@ -24,13 +24,17 @@ any award, and the transcripts in this repository are the calls that did.
 ## Run the tests
 
 ```sh
-npm test                 # needs Node 20 or later, no install for the tests
+npm test                 # Node 20 or later; no install on Node 22.6+ (native type stripping)
+npm install && npm test  # Node 20 or 21: installs tsx, the one dev dependency
+npm run test:tsx         # force the tsx loader on any Node
 npm run test:q1
 npm run test:q5
 ```
 
-`tsx` is the only dev dependency, for the TypeScript runner, and the tests also run
-with Node 22 or later without it, because the import names the `.ts` file.
+`scripts/test.mjs` picks the loader from the running Node: native type stripping on
+Node 22.6 and later, `tsx` on Node 20 and 21, so the same command works in the
+reviewer's environment either way. Both paths were run here: Node 24 with no install
+and Node 24 through tsx, 45 pass and 0 fail on each.
 
 ## Q1: plain amounts
 
