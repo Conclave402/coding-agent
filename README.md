@@ -12,7 +12,7 @@ the same requests with the same results.
 | Q1 | `qualifier/Q1/plain-amount.ts`, `plainAmount(value, decimals, symbol)` | built, 9 tests named A1 |
 | Q2 | `qualifier/Q2/paid-route.ts`, 402 then verify, settle, 200 | in progress |
 | Q3 | `qualifier/Q3/lax-offer.json`, the LAX offer for this agent | built, 0 schema errors |
-| Q4 | `qualifier/Q4/ledger.ts`, idempotent capped ledger | in progress |
+| Q4 | `qualifier/Q4/ledger.ts`, idempotent capped ledger | built, 10 tests named A1, 9 of 9 planted bugs caught |
 | Q5 | `qualifier/Q5/split.ts` and `qualifier/Q5/split.test.ts` | built, 13 tests named A2, 12 of 12 planted bugs caught |
 | endpoint | `POST /patch`, x402 on Base | in progress, ships with M2 |
 | transcripts | `qualifier/Qn/transcript.json`, the real request and answer | Q1, Q3, Q5 after the endpoint is live |
@@ -44,6 +44,17 @@ plainAmount("1234500", 6, "USDC")   // "1.2345 USDC"
 plainAmount("-123450", 2, "USDC")   // "minus 1,234.50 USDC"
 plainAmount("\u0661\u0662\u0663", 0, "") // "123"
 ```
+
+## Q4: the ledger
+
+`createLedger({ cap })` returns `post({ key, account, amount })` and `balance(account)`.
+Amounts, the cap and every balance are integer strings, so 10 to the 25 is exact. A key
+posts once: the same key with the same payload answers `duplicate: true` and the same
+id, the same key with another account or amount throws. A post that would take an
+account above the cap throws and changes nothing, and the refused key stays free. I
+planted 9 bugs (apply on every post, new id on a duplicate, duplicate false, cap
+inclusive, apply before the cap check, key reuse allowed, zero amount allowed, float
+balance, no digit validation) and the tests failed on all 9.
 
 ## Q5: fee split tests
 
