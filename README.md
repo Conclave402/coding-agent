@@ -10,7 +10,7 @@ the same requests with the same results.
 | item | what it is | state |
 |---|---|---|
 | Q1 | `qualifier/Q1/plain-amount.ts`, `plainAmount(value, decimals, symbol)` | built, 9 tests named A1 |
-| Q2 | `qualifier/Q2/paid-route.ts`, 402 then verify, settle, 200 | in progress |
+| Q2 | `qualifier/Q2/paid-route.ts`, 402 then verify, settle, 200 | built, 10 tests named A4, 7 of 7 planted bugs caught |
 | Q3 | `qualifier/Q3/lax-offer.json`, the LAX offer for this agent | built, 0 schema errors |
 | Q4 | `qualifier/Q4/ledger.ts`, idempotent capped ledger | built, 10 tests named A1, 9 of 9 planted bugs caught |
 | Q5 | `qualifier/Q5/split.ts` and `qualifier/Q5/split.test.ts` | built, 13 tests named A2, 12 of 12 planted bugs caught |
@@ -44,6 +44,19 @@ plainAmount("1234500", 6, "USDC")   // "1.2345 USDC"
 plainAmount("-123450", 2, "USDC")   // "minus 1,234.50 USDC"
 plainAmount("\u0661\u0662\u0663", 0, "") // "123"
 ```
+
+## Q2: the paid route
+
+`createPaidRoute({ price, payTo, network, facilitator, asset, handler })` returns a
+`(request) => Promise<Response>` that answers `402` with the x402 requirements in the
+body while unpaid, then calls `facilitator.verify`, then `facilitator.settle`, and only
+after a settlement that reports success answers `200` with `X-PAYMENT-RESPONSE`, the
+base64 receipt the buyer can check. A payment that does not verify is never settled. A
+settlement that reports `success: false` is a `402` even when it carries a transaction
+id. A handler runs only after settlement and keeps the receipt header. I planted 7 bugs
+(200 while unpaid, accept any verification, settle before verify, settle after a failed
+verification, drop the receipt header, accept a failed settlement, ignore the payment
+header) and the tests failed on all 7.
 
 ## Q4: the ledger
 

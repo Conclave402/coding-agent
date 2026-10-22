@@ -8,10 +8,11 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test qualifier/Q1/*.test.ts qualifier/Q4/*.test.ts qualifier/Q5/*.test.ts",
+    "test": "node --test qualifier/Q1/*.test.ts qualifier/Q2/*.test.ts qualifier/Q4/*.test.ts qualifier/Q5/*.test.ts",
     "test:q1": "node --test qualifier/Q1/*.test.ts",
     "test:q5": "node --test qualifier/Q5/*.test.ts",
-    "test:q4": "node --test qualifier/Q4/*.test.ts"
+    "test:q4": "node --test qualifier/Q4/*.test.ts",
+    "test:q2": "node --test qualifier/Q2/*.test.ts"
   },
   "devDependencies": {
     "tsx": "^4.19.2"
